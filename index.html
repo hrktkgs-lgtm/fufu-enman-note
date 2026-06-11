@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ふうふ円満ノート</title>
+<style>
+  :root {
+    --bg: #fdf6f0;
+    --card: #ffffff;
+    --accent: #e8736f;
+    --accent-soft: #fbe4e2;
+    --accent-deep: #c95450;
+    --text: #4a3f3c;
+    --text-soft: #8d7f7a;
+    --line: #f0e2da;
+    --good: #6fae8f;
+    --radius: 16px;
+    --shadow: 0 2px 10px rgba(180, 140, 120, .12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding-bottom: 90px;
+  }
+  header {
+    text-align: center;
+    padding: 22px 16px 10px;
+  }
+  header h1 { margin: 0; font-size: 1.25rem; letter-spacing: .06em; }
+  header p { margin: 4px 0 0; font-size: .8rem; color: var(--text-soft); }
+
+  main { max-width: 640px; margin: 0 auto; padding: 8px 14px 30px; }
+  section { display: none; }
+  section.active { display: block; animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 16px;
+    margin: 14px 0;
+  }
+  .card h2 { font-size: 1rem; margin: 0 0 10px; color: var(--accent-deep); }
+  .card h3 { font-size: .92rem; margin: 16px 0 6px; }
+  .hint { font-size: .78rem; color: var(--text-soft); margin: 4px 0 10px; }
+  .notice {
+    background: var(--accent-soft);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: .8rem;
+    margin-bottom: 12px;
+  }
+
+  label.q { display: block; font-size: .88rem; font-weight: 600; margin: 14px 0 6px; }
+  textarea, input[type=date] {
+    width: 100%;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: .95rem;
+    font-family: inherit;
+    color: var(--text);
+    background: #fffdfb;
+  }
+  textarea { min-height: 76px; resize: vertical; }
+  textarea:focus, input:focus { outline: none; border-color: var(--accent); }
+
+  .mood-row { display: flex; gap: 8px; justify-content: space-between; margin: 6px 0 4px; }
+  .mood-btn {
+    flex: 1;
+    font-size: 1.5rem;
+    padding: 8px 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: #faf3ee;
+    cursor: pointer;
+    transition: transform .1s;
+  }
+  .mood-btn:active { transform: scale(.93); }
+  .mood-btn.sel { border-color: var(--accent); background: var(--accent-soft); }
+
+  button.primary {
+    display: block;
+    width: 100%;
+    margin-top: 18px;
+    padding: 13px;
+    border: none;
+    border-radius: 14px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button.primary:active { background: var(--accent-deep); }
+  button.sub {
+    padding: 9px 14px;
+    border: 1.5px solid var(--accent);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--accent-deep);
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+
+  #recBtn { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  #recBtn.listening { background: var(--accent-deep); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(232,115,111,.45);} 50% { box-shadow: 0 0 0 10px rgba(232,115,111,0);} }
+  #recStatus { font-size: .8rem; color: var(--text-soft); text-align: center; margin-top: 8px; min-height: 1.2em; }
+
+  /* グラフ */
+  .chart { display: flex; align-items: flex-end; gap: 4px; height: 110px; padding: 8px 2px 0; }
+  .chart .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
+  .chart .bar { width: 100%; max-width: 26px; border-radius: 6px 6px 0 0; background: var(--accent); opacity: .85; }
+  .chart .bar.empty { background: var(--line); height: 4px !important; }
+  .chart .day { font-size: .58rem; color: var(--text-soft); }
+  .stats { display: flex; gap: 10px; margin-top: 12px; }
+  .stat {
+    flex: 1; text-align: center; background: #faf3ee; border-radius: 12px; padding: 10px 4px;
+  }
+  .stat b { display: block; font-size: 1.3rem; color: var(--accent-deep); }
+  .stat span { font-size: .72rem; color: var(--text-soft); }
+
+  /* 履歴 */
+  .entry {
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin: 10px 0;
+    cursor: pointer;
+  }
+  .entry .head { display: flex; justify-content: space-between; align-items: center; font-size: .85rem; }
+  .entry .head .d { font-weight: 700; }
+  .entry .tag { font-size: .68rem; background: var(--accent-soft); color: var(--accent-deep); border-radius: 8px; padding: 2px 8px; }
+  .entry .body { display: none; margin-top: 8px; font-size: .85rem; }
+  .entry.open .body { display: block; }
+  .entry .body dt { font-weight: 700; font-size: .78rem; color: var(--accent-deep); margin-top: 8px; }
+  .entry .body dd { margin: 2px 0 0; white-space: pre-wrap; }
+  .entry .del { margin-top: 10px; font-size: .75rem; color: #b05; background: none; border: none; cursor: pointer; padding: 0; }
+
+  /* タブバー */
+  nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #fffdfb;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-around;
+    padding: 6px 4px calc(8px + env(safe-area-inset-bottom));
+    z-index: 10;
+  }
+  nav button {
+    background: none; border: none; cursor: pointer;
+    font-family: inherit;
+    font-size: .68rem; color: var(--text-soft);
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    padding: 4px 10px; border-radius: 10px;
+  }
+  nav button .ico { font-size: 1.3rem; }
+  nav button.active { color: var(--accent-deep); background: var(--accent-soft); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%);
+    background: var(--text); color: #fff; font-size: .85rem;
+    padding: 10px 18px; border-radius: 20px; opacity: 0;
+    transition: opacity .3s; pointer-events: none; z-index: 20;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: .94; }
+
+  @media (min-width: 700px) {
+    header h1 { font-size: 1.5rem; }
+    .card { padding: 24px 26px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌸 ふうふ円満ノート</h1>
+  <p>じぶんの言動をやさしく見つめなおすノート</p>
+</header>
+
+<main>
+
+<!-- ===== 日記タブ ===== -->
+<section id="tab-diary" class="active">
+  <div class="card">
+    <h2>📔 今日の振り返り日記</h2>
+    <p class="hint">全部書かなくて大丈夫。1つでも書けたら花マルです🌼</p>
+
+    <label class="q">日付</label>
+    <input type="date" id="dDate">
+
+    <label class="q">今日の夫婦の雰囲気は？</label>
+    <div class="mood-row" id="moodRow">
+      <button class="mood-btn" data-v="1">😢</button>
+      <button class="mood-btn" data-v="2">😕</button>
+      <button class="mood-btn" data-v="3">😐</button>
+      <button class="mood-btn" data-v="4">🙂</button>
+      <button class="mood-btn" data-v="5">😊</button>
+    </div>
+
+    <label class="q">① 夫とのやりとりで、嬉しかった・感謝したことは？</label>
+    <textarea id="dGood" placeholder="小さなことでOK。「ゴミ出ししてくれた」など"></textarea>
+
+    <label class="q">② イラッと・モヤッとした場面と、その時の自分の言動は?</label>
+    <textarea id="dIra" placeholder="場面と、自分が言ったこと・した態度をセットで"></textarea>
+
+    <label class="q">③ その場面、夫の目にはどう映ったと思う?</label>
+    <textarea id="dView" placeholder="夫になったつもりで、自分の姿を想像してみる"></textarea>
+
+    <label class="q">④ 明日試してみたい言い方・行動は？</label>
+    <textarea id="dNext" placeholder="例:「なんで?」じゃなくて「どうしたの?」と聞いてみる"></textarea>
+
+    <button class="primary" onclick="saveDiary()">今日の日記を保存する</button>
+  </div>
+</section>
+
+<!-- ===== 夫の話タブ ===== -->
+<section id="tab-voice">
+  <div class="card">
+    <h2>🎙️ 夫の話を聞いてみる</h2>
+    <div class="notice">
+      💛 このページは、夫の話を「録音して分析する」ためではなく、<b>夫の気持ちを知って自分を見つめなおす</b>ためのものです。音声認識を使うときは、できるだけ夫に「あなたの気持ちをちゃんと知りたいから」と伝えて、同意のうえで使ってくださいね。こっそり使うこと自体が、信頼関係に影響することがあります。
+    </div>
+
+    <h3>STEP 1. 夫の話をテキストにする</h3>
+    <p class="hint">マイクで音声認識するか、夫からのLINEやメッセージを貼り付けてもOK。録音済み音声は、スピーカーで再生しながら下のボタンを押すと認識できます。</p>
+    <button class="primary" id="recBtn" onclick="toggleRec()"><span id="recIco">🎙️</span><span id="recLabel">音声認識をはじめる</span></button>
+    <div id="recStatus"></div>
+
+    <label class="q">夫の話した内容（あとから手で直せます）</label>
+    <textarea id="vText" style="min-height:120px" placeholder="ここに音声認識の結果が入ります。直接入力・貼り付けもOK"></textarea>
+
+    <h3>STEP 2. 夫の目線で考えてみるワーク</h3>
+    <label class="q">① 夫がいちばん伝えたかったことは何だと思う?</label>
+    <textarea id="vFact" placeholder="言葉の表面ではなく、その奥にある気持ちを想像してみる"></textarea>
+
+    <label class="q">② 夫の目に映っている「私」は、どんな姿?</label>
+    <textarea id="vMirror" placeholder="例: いつも忙しそうで話しかけづらい、否定から入る、など"></textarea>
+
+    <label class="q">③ 自分の本当の気持ちと、夫に伝わっている印象のギャップは?</label>
+    <textarea id="vGap" placeholder="例: 心配して言ったのに、責めてるように聞こえていたかも"></textarea>
+
+    <label class="q">④ このことから、次に活かせそうなことは?</label>
+    <textarea id="vNext2" placeholder="小さな一歩でOK"></textarea>
+
+    <div class="btn-row">
+      <button class="sub" onclick="copyAiPrompt()">🤖 AIに相談する用の文章をコピー</button>
+    </div>
+    <p class="hint">↑ コピーした文章をClaudeやChatGPTに貼り付けると、「夫の目にどう映っているか」を一緒に考えてもらえます。</p>
+
+    <button class="primary" onclick="saveVoice()">このワークを保存する</button>
+  </div>
+</section>
+
+<!-- ===== ふりかえりタブ ===== -->
+<section id="tab-review">
+  <div class="card">
+    <h2>📊 夫婦の雰囲気の推移（直近14日）</h2>
+    <div class="chart" id="chart"></div>
+    <div class="stats">
+      <div class="stat"><b id="stTotal">0</b><span>記録した日数</span></div>
+      <div class="stat"><b id="stStreak">0</b><span>連続記録</span></div>
+      <div class="stat"><b id="stAvg">-</b><span>平均の雰囲気</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>📚 これまでの記録</h2>
+    <p class="hint">タップすると中身が見られます。</p>
+    <div id="historyList"></div>
+  </div>
+</section>
+
+<!-- ===== データタブ ===== -->
+<section id="tab-data">
+  <div class="card">
+    <h2>⚙️ データの管理</h2>
+    <div class="notice">
+      🔒 記録はすべて<b>この端末のブラウザの中だけ</b>に保存されます。どこにも送信されません。<br>
+      ただし端末ごとに別保存なので、スマホとPCの両方で使う場合は、下のバックアップで書き出して、もう一方で読み込んでください。
+    </div>
+    <div class="btn-row">
+      <button class="sub" onclick="exportData()">⬇️ バックアップを書き出す</button>
+      <button class="sub" onclick="document.getElementById('importFile').click()">⬆️ バックアップを読み込む</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+    </div>
+    <h3>すべて削除</h3>
+    <p class="hint">この端末の記録をすべて消します。元に戻せません。</p>
+    <div class="btn-row">
+      <button class="sub" style="border-color:#b05;color:#b05" onclick="wipeAll()">🗑️ 全データを削除する</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav>
+  <button class="active" data-tab="tab-diary"><span class="ico">📔</span>日記</button>
+  <button data-tab="tab-voice"><span class="ico">🎙️</span>夫の話</button>
+  <button data-tab="tab-review"><span class="ico">📊</span>ふりかえり</button>
+  <button data-tab="tab-data"><span class="ico">⚙️</span>データ</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const KEY = 'fufu_enman_v1';
+const MOODS = ['', '😢', '😕', '😐', '🙂', '😊'];
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || { diary: [], voice: [] }; }
+  catch { return { diary: [], voice: [] }; }
+}
+function store(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ---------- タブ ---------- */
+document.querySelectorAll('nav button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('main section').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById(b.dataset.tab).classList.add('active');
+    if (b.dataset.tab === 'tab-review') renderReview();
+  };
+});
+
+/* ---------- 日記 ---------- */
+let mood = 0;
+document.getElementById('dDate').value = todayStr();
+document.querySelectorAll('.mood-btn').forEach(b => {
+  b.onclick = () => {
+    mood = +b.dataset.v;
+    document.querySelectorAll('.mood-btn').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+  };
+});
+
+function saveDiary() {
+  const date = document.getElementById('dDate').value || todayStr();
+  const e = {
+    type: 'diary', date, mood,
+    good: dGood.value.trim(), ira: dIra.value.trim(),
+    view: dView.value.trim(), next: dNext.value.trim(),
+    ts: Date.now()
+  };
+  if (!e.mood && !e.good && !e.ira && !e.view && !e.next) { toast('どれか1つでも記入してね🌼'); return; }
+  const d = load();
+  const i = d.diary.findIndex(x => x.date === date);
+  if (i >= 0) {
+    if (!confirm(date + ' の日記はもうあります。上書きしますか?')) return;
+    d.diary[i] = e;
+  } else d.diary.push(e);
+  store(d);
+  toast('保存しました🌸 今日もえらい！');
+  dGood.value = dIra.value = dView.value = dNext.value = '';
+  mood = 0;
+  document.querySelectorAll('.mood-btn').forEach(x => x.classList.remove('sel'));
+}
+
+/* ---------- 音声認識 ---------- */
+let rec = null, listening = false, finalText = '';
+function toggleRec() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('このブラウザは音声認識に対応していません。Chrome か Edge で開いてください。\n（テキストの貼り付けは使えます）'); return; }
+  if (listening) { listening = false; rec.stop(); return; }
+
+  finalText = vText.value ? vText.value + '\n' : '';
+  rec = new SR();
+  rec.lang = 'ja-JP';
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.onresult = ev => {
+    let interim = '';
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const r = ev.results[i];
+      if (r.isFinal) finalText += r[0].transcript;
+      else interim += r[0].transcript;
+    }
+    vText.value = finalText + interim;
+    vText.scrollTop = vText.scrollHeight;
+  };
+  rec.onerror = ev => {
+    if (ev.error === 'not-allowed') toast('マイクの使用を許可してください');
+    else if (ev.error !== 'no-speech') toast('音声認識エラー: ' + ev.error);
+  };
+  rec.onend = () => {
+    if (listening) { try { rec.start(); } catch {} return; }  // 無音で勝手に止まったら再開
+    setRecUi(false);
+  };
+  try { rec.start(); } catch { toast('音声認識を開始できませんでした'); return; }
+  listening = true;
+  setRecUi(true);
+}
+function setRecUi(on) {
+  const b = document.getElementById('recBtn');
+  b.classList.toggle('listening', on);
+  document.getElementById('recIco').textContent = on ? '⏹️' : '🎙️';
+  document.getElementById('recLabel').textContent = on ? '認識を止める' : '音声認識をはじめる';
+  document.getElementById('recStatus').textContent = on ? '聞いています…（もう一度押すと停止）' : '';
+}
+
+function saveVoice() {
+  const e = {
+    type: 'voice', date: todayStr(),
+    text: vText.value.trim(), fact: vFact.value.trim(),
+    mirror: vMirror.value.trim(), gap: vGap.value.trim(), next: vNext2.value.trim(),
+    ts: Date.now()
+  };
+  if (!e.text && !e.fact && !e.mirror && !e.gap && !e.next) { toast('どれか1つでも記入してね🌼'); return; }
+  const d = load();
+  d.voice.push(e);
+  store(d);
+  toast('ワークを保存しました🌸');
+  vText.value = vFact.value = vMirror.value = vGap.value = vNext2.value = '';
+}
+
+function copyAiPrompt() {
+  const t = vText.value.trim();
+  if (!t) { toast('先に夫の話の内容を入れてね'); return; }
+  const prompt =
+`私は夫ともっと仲良く過ごしたいと思っていて、自分の言動を見直したいです。
+以下は夫が話していた内容（または夫からのメッセージ）です。
+
+---
+${t}
+---
+
+この内容をもとに、夫を悪者にも私を悪者にもせず、次の点を一緒に考えてください。
+1. 夫がいちばん伝えたかった気持ちは何か
+2. 夫の目に、私の言動はどう映っていそうか
+3. 私の意図と夫の受け取り方に、どんなすれ違いがありそうか
+4. 明日からできる、具体的な言い方や行動の工夫（3つほど）
+
+責めるトーンではなく、あたたかく現実的なアドバイスをお願いします。`;
+  navigator.clipboard.writeText(prompt)
+    .then(() => toast('コピーしました！AIに貼り付けてね🤖'))
+    .catch(() => { vText.value = prompt; toast('コピーできなかったので欄に表示しました'); });
+}
+
+/* ---------- ふりかえり ---------- */
+function renderReview() {
+  const d = load();
+  // グラフ（直近14日）
+  const chart = document.getElementById('chart');
+  chart.innerHTML = '';
+  const byDate = {};
+  d.diary.forEach(e => { byDate[e.date] = e; });
+  for (let i = 13; i >= 0; i--) {
+    const dt = new Date(); dt.setDate(dt.getDate() - i);
+    const ds = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+    const e = byDate[ds];
+    const wrap = document.createElement('div'); wrap.className = 'bar-wrap';
+    const bar = document.createElement('div'); bar.className = 'bar';
+    if (e && e.mood) { bar.style.height = (e.mood * 18) + 'px'; bar.title = ds + ' ' + MOODS[e.mood]; }
+    else bar.classList.add('empty');
+    const day = document.createElement('div'); day.className = 'day';
+    day.textContent = (dt.getMonth() + 1) + '/' + dt.getDate();
+    wrap.appendChild(bar); wrap.appendChild(day);
+    chart.appendChild(wrap);
+  }
+  // 統計
+  document.getElementById('stTotal').textContent = d.diary.length;
+  let streak = 0;
+  for (let i = 0; ; i++) {
+    const dt = new Date(); dt.setDate(dt.getDate() - i);
+    const ds = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+    if (byDate[ds]) streak++;
+    else if (i === 0) continue;  // 今日まだ書いてなくても連続は切らない
+    else break;
+  }
+  document.getElementById('stStreak').textContent = streak;
+  const moods = d.diary.filter(e => e.mood).map(e => e.mood);
+  document.getElementById('stAvg').textContent = moods.length ? MOODS[Math.round(moods.reduce((a, b) => a + b) / moods.length)] : '-';
+
+  // 履歴
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+  const all = [...d.diary, ...d.voice].sort((a, b) => b.ts - a.ts);
+  if (!all.length) { list.innerHTML = '<p class="hint">まだ記録がありません。今日から始めてみましょう🌱</p>'; return; }
+  all.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'entry';
+    const isDiary = e.type === 'diary';
+    const fields = isDiary
+      ? [['嬉しかった・感謝', e.good], ['モヤッと場面と自分の言動', e.ira], ['夫の目にはどう映った?', e.view], ['明日試したいこと', e.next]]
+      : [['夫の話', e.text], ['夫が伝えたかったこと', e.fact], ['夫から見えている私', e.mirror], ['意図と印象のギャップ', e.gap], ['次に活かすこと', e.next]];
+    let body = '<dl>';
+    fields.forEach(([k, v]) => { if (v) body += `<dt>${k}</dt><dd>${esc(v)}</dd>`; });
+    body += '</dl>';
+    div.innerHTML =
+      `<div class="head"><span class="d">${e.date} ${isDiary && e.mood ? MOODS[e.mood] : ''}</span>` +
+      `<span class="tag">${isDiary ? '📔 日記' : '🎙️ 夫の話'}</span></div>` +
+      `<div class="body">${body}<button class="del">この記録を削除</button></div>`;
+    div.querySelector('.head').parentElement.onclick = ev => {
+      if (ev.target.classList.contains('del')) return;
+      div.classList.toggle('open');
+    };
+    div.querySelector('.del').onclick = () => {
+      if (!confirm(e.date + ' の記録を削除しますか?')) return;
+      const dd = load();
+      const arr = isDiary ? dd.diary : dd.voice;
+      const idx = arr.findIndex(x => x.ts === e.ts);
+      if (idx >= 0) arr.splice(idx, 1);
+      store(dd);
+      renderReview();
+      toast('削除しました');
+    };
+    list.appendChild(div);
+  });
+}
+function esc(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ---------- データ管理 ---------- */
+function exportData() {
+  const blob = new Blob([JSON.stringify(load(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fufu-enman-backup-' + todayStr() + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('バックアップを書き出しました');
+}
+function importData(input) {
+  const f = input.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const incoming = JSON.parse(r.result);
+      if (!incoming.diary || !incoming.voice) throw 0;
+      const cur = load();
+      // tsで重複を除いてマージ
+      const merge = (a, b) => {
+        const seen = new Set(a.map(x => x.ts));
+        return [...a, ...b.filter(x => !seen.has(x.ts))];
+      };
+      store({ diary: merge(cur.diary, incoming.diary), voice: merge(cur.voice, incoming.voice) });
+      toast('読み込みました（既存の記録と合体）');
+      renderReview();
+    } catch { alert('このファイルは読み込めませんでした。バックアップで書き出したJSONファイルを選んでください。'); }
+  };
+  r.readAsText(f);
+  input.value = '';
+}
+function wipeAll() {
+  if (!confirm('本当にすべての記録を削除しますか?\nこの操作は元に戻せません。')) return;
+  if (!confirm('最終確認です。削除してよろしいですか?')) return;
+  localStorage.removeItem(KEY);
+  renderReview();
+  toast('すべて削除しました');
+}
+</script>
+</body>
+</html>
